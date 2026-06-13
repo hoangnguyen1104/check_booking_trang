@@ -67,9 +67,17 @@
             font-size: 15px;
         }
 
-        .date-field {
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 280px));
+            gap: 18px;
             margin-top: 18px;
-            max-width: 280px;
+        }
+
+        .field-hint {
+            margin: 6px 0 0;
+            color: #6b7280;
+            font-size: 13px;
         }
 
         .actions {
@@ -139,6 +147,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
             form,
             .result {
                 padding: 18px;
@@ -168,9 +180,26 @@
             </div>
         </div>
 
-        <div class="date-field">
-            <label for="ref_date">Ngày tham chiếu</label>
-            <input id="ref_date" type="date" name="ref_date" required>
+        <div class="settings-grid">
+            <div>
+                <label for="ref_date">Ngày tham chiếu</label>
+                <input id="ref_date" type="date" name="ref_date" required>
+            </div>
+
+            <div>
+                <label for="threshold_percent">Ngưỡng date cho phép (%)</label>
+                <input
+                    id="threshold_percent"
+                    type="number"
+                    name="threshold_percent"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value="{{ threshold_percent|default(50) }}"
+                    required
+                >
+                <p class="field-hint">Chỉ chọn lô có date từ ngưỡng này trở lên.</p>
+            </div>
         </div>
 
         <div class="actions">

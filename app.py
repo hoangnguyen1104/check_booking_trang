@@ -114,7 +114,7 @@ def display_upload_name(filepath: str) -> str:
     return filename
 
 
-def build_available_batches(stock_df: pd.DataFrame) -> dict[str, list[dict]]:
+def build_available_batches(stock_df: pd.DataFrame, threshold_percent: float) -> dict[str, list[dict]]:
     available_batches = {}
 
     for row_idx in range(len(stock_df)):
@@ -134,7 +134,7 @@ def build_available_batches(stock_df: pd.DataFrame) -> dict[str, list[dict]]:
             ratio = float(row_values[6] or 0)
             quantity = parse_quantity(row_values[1])
 
-            if ratio >= 50 and quantity > 0:
+            if ratio >= threshold_percent and quantity > 0:
                 available_batches[product_code].append(
                     {
                         "batch": str(row_values[0]),
@@ -233,10 +233,18 @@ def read_booking_totals(filepath: str) -> dict:
     return product_map
 
 
-def build_legacy_result_text(stock_file: str, booking_file: str, stock_df: pd.DataFrame, batch_count: int, ref_date: datetime) -> str:
+def build_legacy_result_text(
+    stock_file: str,
+    booking_file: str,
+    stock_df: pd.DataFrame,
+    batch_count: int,
+    ref_date: datetime,
+    threshold_percent: float,
+) -> str:
     lines = [
         f"--- {display_upload_name(stock_file)} ---",
         f"Ngày tham chiếu: {ref_date.strftime('%d/%m/%y')}",
+        f"Ngưỡng date: {threshold_percent:g}%",
         f"Đã ghi {batch_count} dòng mã lô",
         f"Cột mới: {', '.join(EXTRA_COLUMNS)}",
         "Mẫu 5 dòng mã lô đầu:",
@@ -272,7 +280,7 @@ def build_legacy_result_text(stock_file: str, booking_file: str, stock_df: pd.Da
 
                 row_values = stock_df.iloc[i].tolist()
                 ratio = float(row_values[6] or 0)
-                if ratio >= 50:
+                if ratio >= threshold_percent:
                     lines.append(f"{row_values[0]} Tồn kho: {row_values[1]}   Date: {row_values[6]}")
                     p_date = True
                     p_remain += parse_quantity(row_values[1])
@@ -288,11 +296,11 @@ def build_legacy_result_text(stock_file: str, booking_file: str, stock_df: pd.Da
     return "\n".join(lines)
 
 
-def build_result(stock_file: str, booking_file: str, ref_date: datetime) -> str:
+def build_result(stock_file: str, booking_file: str, ref_date: datetime, threshold_percent: float = 50) -> str:
     stock_df, batch_count = enrich_excel(stock_file, ref_date)
-    available_batches = build_available_batches(stock_df)
+    available_batches = build_available_batches(stock_df, threshold_percent)
     update_booking_fulfillment(booking_file, available_batches)
-    return build_legacy_result_text(stock_file, booking_file, stock_df, batch_count, ref_date)
+    return build_legacy_result_text(stock_file, booking_file, stock_df, batch_count, ref_date, threshold_percent)
 
 
 def save_upload(file_storage, prefix: str) -> str:
@@ -315,20 +323,33 @@ def process():
     stock_file = request.files.get("stock_file")
     booking_file = request.files.get("booking_file")
     ref_date_value = request.form.get("ref_date")
+    threshold_value = request.form.get("threshold_percent", "50").strip() or "50"
 
     if not stock_file or not booking_file or not ref_date_value:
-        return render_template("index.html", error="Vui lòng chọn đủ 2 file và nhập ngày tham chiếu.")
+        return render_template(
+            "index.html",
+            error="Vui lòng chọn đủ 2 file và nhập ngày tham chiếu.",
+            threshold_percent=threshold_value,
+        )
 
     try:
         ref_date = datetime.strptime(ref_date_value, "%Y-%m-%d")
+        threshold_percent = float(threshold_value)
+        if threshold_percent < 0 or threshold_percent > 100:
+            raise ValueError("Ngưỡng date phải nằm trong khoảng 0-100%.")
         stock_path = save_upload(stock_file, "stock")
         booking_path = save_upload(booking_file, "booking")
-        result_text = build_result(stock_path, booking_path, ref_date)
+        result_text = build_result(stock_path, booking_path, ref_date, threshold_percent)
         RESULT_FILE.write_text(result_text, encoding="utf-8")
     except Exception as exc:
-        return render_template("index.html", error=f"Lỗi xử lý: {exc}")
+        return render_template("index.html", error=f"Lỗi xử lý: {exc}", threshold_percent=threshold_value)
 
-    return render_template("index.html", success=True, result_preview=result_text)
+    return render_template(
+        "index.html",
+        success=True,
+        result_preview=result_text,
+        threshold_percent=threshold_value,
+    )
 
 
 @app.route("/download")
