@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm tra Booking</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Arial, sans-serif;
+            color: #1f2937;
+            background: #f4f6f8;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        main {
+            width: min(960px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 36px 0;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(28px, 4vw, 40px);
+            letter-spacing: 0;
+        }
+
+        .subtitle {
+            margin: 0 0 28px;
+            color: #5b6573;
+        }
+
+        form,
+        .result {
+            background: #ffffff;
+            border: 1px solid #dfe4ea;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 12px 28px rgba(31, 41, 55, 0.08);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid #c8d0da;
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: #ffffff;
+            color: #1f2937;
+            font-size: 15px;
+        }
+
+        .date-field {
+            margin-top: 18px;
+            max-width: 280px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        button,
+        .download {
+            border: 0;
+            border-radius: 6px;
+            padding: 12px 18px;
+            background: #126c57;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .download.secondary {
+            background: #38546b;
+        }
+
+        button:hover,
+        .download:hover {
+            filter: brightness(0.9);
+        }
+
+        .error {
+            margin: 0 0 18px;
+            border-left: 4px solid #c0392b;
+            background: #fff1f0;
+            padding: 12px 14px;
+            color: #8a1f15;
+            border-radius: 6px;
+        }
+
+        .success {
+            margin: 0;
+            color: #126c57;
+            font-weight: 700;
+        }
+
+        .result {
+            margin-top: 24px;
+        }
+
+        pre {
+            max-height: 420px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 16px 0 0;
+            border: 1px solid #dfe4ea;
+            border-radius: 6px;
+            padding: 16px;
+            background: #f8fafc;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 720px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            form,
+            .result {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Kiểm tra Booking</h1>
+    <p class="subtitle">Chọn file tồn kho, file booking và ngày tham chiếu để xuất kết quả.</p>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form action="/process" method="post" enctype="multipart/form-data">
+        <div class="grid">
+            <div>
+                <label for="stock_file">File tồn kho</label>
+                <input id="stock_file" type="file" name="stock_file" accept=".xlsx" required>
+            </div>
+
+            <div>
+                <label for="booking_file">File booking</label>
+                <input id="booking_file" type="file" name="booking_file" accept=".xlsx" required>
+            </div>
+        </div>
+
+        <div class="date-field">
+            <label for="ref_date">Ngày tham chiếu</label>
+            <input id="ref_date" type="date" name="ref_date" required>
+        </div>
+
+        <div class="actions">
+            <button type="submit">Xử lý</button>
+            {% if success %}
+                <a class="download" href="/download">Tải result.txt</a>
+                <a class="download secondary" href="/download-booking">Tải Booking_result.xlsx</a>
+                <p class="success">Đã tạo file kết quả.</p>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if result_preview %}
+        <section class="result">
+            <strong>Nội dung result.txt</strong>
+            <pre>{{ result_preview }}</pre>
+        </section>
+    {% endif %}
+</main>
+</body>
+</html>
