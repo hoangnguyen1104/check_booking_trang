@@ -53,10 +53,12 @@ def update_booking_fulfillment(booking_file: str, available_batches: dict[str, l
             continue
 
         order_quantity = parse_quantity(booking_df.iloc[row_idx, 1])
+        threshold_percent = float(booking_df.iloc[row_idx, 2])
         _, fulfilled_quantity, _, note = allocate_from_batches(
             product_code,
             order_quantity,
             available_batches,
+            threshold_percent, 
         )
 
         booking_df.iloc[row_idx, fulfillment_col] = fulfilled_quantity
@@ -66,9 +68,7 @@ def update_booking_fulfillment(booking_file: str, available_batches: dict[str, l
     format_booking_result_file(note_col)
 
 
-def build_result(stock_file: str, booking_file: str, ref_date: datetime, threshold_percent: float = 50) -> str:
+def build_result(stock_file: str, booking_file: str, ref_date: datetime) -> str:
     stock_df, batch_count = enrich_excel(stock_file, ref_date)
-    available_batches = build_available_batches(stock_df, threshold_percent)
+    available_batches = build_available_batches(stock_df)
     update_booking_fulfillment(booking_file, available_batches)
-    result_text = build_legacy_result_text(stock_file, booking_file, stock_df, batch_count, ref_date, threshold_percent)
-    return result_text

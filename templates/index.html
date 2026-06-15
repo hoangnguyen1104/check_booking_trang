@@ -185,40 +185,17 @@
                 <label for="ref_date">Ngày tham chiếu</label>
                 <input id="ref_date" type="date" name="ref_date" required>
             </div>
-
-            <div>
-                <label for="threshold_percent">Ngưỡng date cho phép (%)</label>
-                <input
-                    id="threshold_percent"
-                    type="number"
-                    name="threshold_percent"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value="{{ threshold_percent|default(50) }}"
-                    required
-                >
-                <p class="field-hint">Chỉ chọn lô có date từ ngưỡng này trở lên.</p>
-            </div>
         </div>
 
         <div class="actions">
             <button type="submit">Xử lý</button>
             {% if success %}
-                <a class="download" href="/download">Tải result.txt</a>
                 <a class="download secondary" href="/download-booking">Tải Booking_result.xlsx</a>
                 <a class="download secondary" href="/download-stock">Tải Stock_result.xlsx</a>
                 <p class="success">Đã tạo file kết quả.</p>
             {% endif %}
         </div>
     </form>
-
-    {% if result_preview %}
-        <section class="result">
-            <strong>Nội dung result.txt</strong>
-            <pre>{{ result_preview }}</pre>
-        </section>
-    {% endif %}
 </main>
 </body>
 </html>

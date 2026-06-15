@@ -1,7 +1,7 @@
 from ..utils import BATCH_PATTERN, get_product_code, parse_quantity
 
 
-def build_available_batches(stock_df, threshold_percent: float) -> dict[str, list[dict]]:
+def build_available_batches(stock_df) -> dict[str, list[dict]]:
     available_batches = {}
 
     for row_idx in range(len(stock_df)):
@@ -21,7 +21,7 @@ def build_available_batches(stock_df, threshold_percent: float) -> dict[str, lis
             ratio = float(row_values[6] or 0)
             quantity = parse_quantity(row_values[1])
 
-            if ratio >= threshold_percent and quantity > 0:
+            if ratio > 0 and quantity > 0:
                 available_batches[product_code].append(
                     {
                         "batch": str(row_values[0]),
@@ -41,7 +41,7 @@ def total_batch_quantity(batches: list[dict]) -> int:
     return sum(batch["quantity"] for batch in batches)
 
 
-def allocate_from_batches(product_code: str, order_quantity: int, available_batches: dict[str, list[dict]]) -> tuple[int, int, int, str]:
+def allocate_from_batches(product_code: str, order_quantity: int, available_batches: dict[str, list[dict]], threshold_percent: float = 50) -> tuple[int, int, int, str]:
     batches = available_batches.get(product_code, [])
     stock_before = total_batch_quantity(batches)
     remaining_order = order_quantity
@@ -53,7 +53,8 @@ def allocate_from_batches(product_code: str, order_quantity: int, available_batc
             break
         if batch["quantity"] <= 0:
             continue
-
+        if batch["ratio"] < threshold_percent:
+            continue
         picked_quantity = min(remaining_order, batch["quantity"])
         batch["quantity"] -= picked_quantity
         remaining_order -= picked_quantity
